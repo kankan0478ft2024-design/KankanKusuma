@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Coding Simulator — Sistem Telekomunikasi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b12;--surface:#0f1320;--surface2:#161b2e;--surface3:#1e2540;
+  --border:rgba(255, 255, 255, 0.13);--border2:rgba(90,110,210,0.28);
+  --accent:#4f6fff;--accent2:#7b9fff;--glow:rgba(79,111,255,0.18);
+  --text:#e8ecf4;--text2:#8b95b0;--text3:#a0b4ff;
+  --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
+  --c1:#4f6fff;--c2:#00c9a7;--c3:#ff6b6b;--c4:#ffd166;--c5:#c77dff;--c6:#ff9f1c;--c7:#e76f51;--c8:#06d6a0;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,111,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,111,255,0.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+
+/* HEADER */
+header{padding:44px 0 28px;border-bottom:1px solid var(--border);margin-bottom:40px}
+.htag{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.htag::before{content:'';width:22px;height:1px;background:var(--accent)}
+h1{font-family:var(--mono);font-size:clamp(22px,4vw,40px);font-weight:700;line-height:1.15;letter-spacing:-.02em}
+h1 em{color:var(--accent2);font-style:normal}
+.sub{color:var(--text2);font-size:14px;font-weight:300;margin-top:6px}
+
+/* TABS */
+.tabs{display:flex;gap:3px;margin-bottom:28px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:5px;overflow-x:auto}
+.tab{font-family:var(--mono);font-size:11.5px;padding:9px 18px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:.04em}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.on{background:var(--accent);color:#fff}
+.sec{display:none}.sec.on{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;margin-bottom:18px}
+.ctitle{font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.ctitle::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* INPUTS */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:640px){.row2{grid-template-columns:1fr}}
+label{font-size:12px;color:var(--text2);font-family:var(--mono);letter-spacing:.04em;display:block;margin-bottom:6px}
+.binput{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:18px;letter-spacing:.12em;padding:13px 16px;width:100%;outline:none;transition:border-color .2s}
+.binput:focus{border-color:var(--accent)}
+select{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 12px;outline:none;cursor:pointer;width:100%}
+.hint{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px}
+
+/* BIT DISPLAY */
+.bits{display:flex;gap:3px;flex-wrap:wrap;margin-top:10px}
+.bc{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text3);transition:all .2s}
+.bc.b1{background:rgba(79,111,255,.15);border-color:var(--accent);color:var(--accent2)}
+.bc.b0{color:var(--text3)}
+
+/* METHOD BTNs */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px}
+.mb{display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .2s;font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+.mb:hover{border-color:var(--border2);color:var(--text)}
+.mb.on{border-color:transparent}
+.mb.on.m1{background:rgba(79,111,255,.18);border-color:var(--c1);color:var(--c1)}
+.mb.on.m2{background:rgba(0,201,167,.12);border-color:var(--c2);color:var(--c2)}
+.mb.on.m3{background:rgba(255,107,107,.12);border-color:var(--c3);color:var(--c3)}
+.mb.on.m4{background:rgba(255,209,102,.12);border-color:var(--c4);color:var(--c4)}
+.mb.on.m5{background:rgba(199,125,255,.12);border-color:var(--c5);color:var(--c5)}
+.mb.on.m6{background:rgba(255,159,28,.12);border-color:var(--c6);color:var(--c6)}
+.mb.on.m7{background:rgba(231,111,81,.12);border-color:var(--c7);color:var(--c7)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.d1{background:var(--c1)}.d2{background:var(--c2)}.d3{background:var(--c3)}.d4{background:var(--c4)}.d5{background:var(--c5)}.d6{background:var(--c6)}.d7{background:var(--c7)}
+
+/* WAVEFORM */
+.wbox{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;overflow-x:auto}
+.wrow{display:flex;align-items:center;margin-bottom:14px}
+.wlabel{font-family:var(--mono);font-size:10px;width:88px;flex-shrink:0;letter-spacing:.04em}
+canvas.wc{border-radius:5px}
+.empty{text-align:center;padding:44px;color:var(--text3);font-family:var(--mono);font-size:12px;letter-spacing:.05em;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* STATS */
+.srow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.sc{background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text2)}
+.sc b{color:var(--text)}
+
+/* TRACE TABLE */
+.trace-wrap{overflow-x:auto;margin-top:14px}
+table.tr{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+table.tr th{background:var(--surface3);padding:7px 11px;text-align:center;color:var(--text3);font-size:9px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--border)}
+table.tr td{padding:7px 11px;text-align:center;border:1px solid var(--border);color:var(--text2)}
+table.tr tr:nth-child(even) td{background:var(--surface2)}
+
+/* THEORY CARDS */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:18px}
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s}
+.tc:hover{border-color:var(--border2)}
+.tc::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:3px 0 0 3px}
+.tc.t1::before{background:var(--c1)}.tc.t2::before{background:var(--c2)}.tc.t3::before{background:var(--c3)}.tc.t4::before{background:var(--c4)}.tc.t5::before{background:var(--c5)}.tc.t6::before{background:var(--c6)}.tc.t7::before{background:var(--c7)}.tc.t8::before{background:var(--c8)}
+.tname{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;margin-bottom:2px}
+.t1 .tname{color:var(--c1)}.t2 .tname{color:var(--c2)}.t3 .tname{color:var(--c3)}.t4 .tname{color:var(--c4)}.t5 .tname{color:var(--c5)}.t6 .tname{color:var(--c6)}.t7 .tname{color:var(--c7)}.t8 .tname{color:var(--c8)}
+.tfull{font-size:11px;color:var(--text3);margin-bottom:10px;font-style:italic}
+.tdesc{font-size:12.5px;color:var(--text2);line-height:1.75;margin-bottom:12px}
+.rulebox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.9}
+.rulebox strong{color:var(--text)}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.badge{font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:4px;letter-spacing:.04em}
+.bp{background:rgba(0,201,167,.12);color:var(--c2);border:1px solid rgba(0,201,167,.25)}
+.bn{background:rgba(255,107,107,.09);color:var(--c3);border:1px solid rgba(255,107,107,.18)}
+.bm{background:rgba(79,111,255,.1);color:var(--accent2);border:1px solid rgba(79,111,255,.2)}
+
+/* VIDEO EMBED */
+.vid-wrap{margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#000;aspect-ratio:16/9;width:100%}
+.vid-wrap video{width:100%;height:100%;display:block;max-height:280px}
+
+/* COMPARISON TABLE */
+.ctable{width:100%;border-collapse:collapse;font-size:12.5px}
+.ctable th{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.ctable td{padding:11px 14px;border-bottom:1px solid rgba(90,110,200,.05);color:var(--text2);vertical-align:middle}
+.ctable tr:last-child td{border-bottom:none}
+.ctable tr:hover td{background:var(--surface2)}
+.mtag{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.tic{color:var(--c2)}.crs{color:var(--c3)}.mid{color:var(--c4)}
+
+/* QUIZ */
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:18px}
+.qprog{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.pbar{flex:1;height:3px;background:var(--surface3);border-radius:3px;margin:0 10px;overflow:hidden}
+.pfill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s ease}
+.pscore{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.qq{font-size:15px;color:var(--text);margin-bottom:8px;line-height:1.55}
+.qsub{font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--surface2);display:inline-block;padding:3px 11px;border-radius:6px;letter-spacing:.06em;margin-bottom:20px}
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px}
+@media(max-width:540px){.qopts{grid-template-columns:1fr}}
+.qopt{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;cursor:pointer;transition:all .2s;font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.03em;text-align:left}
+.qopt:hover{border-color:var(--accent);color:var(--text)}
+.qopt.correct{border-color:var(--c2);background:rgba(0,201,167,.1);color:var(--c2)}
+.qopt.wrong{border-color:var(--c3);background:rgba(255,107,107,.09);color:var(--c3)}
+.qfb{font-size:13px;padding:13px 16px;border-radius:10px;margin-bottom:18px;display:none;line-height:1.65}
+.qfb.show{display:block}
+.qfb.correct{background:rgba(0,201,167,.09);border:1px solid rgba(0,201,167,.28);color:var(--c2)}
+.qfb.wrong{background:rgba(255,107,107,.07);border:1px solid rgba(255,107,107,.18);color:#ff8c8c}
+.btnp{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 26px;font-family:var(--mono);font-size:12px;cursor:pointer;letter-spacing:.05em;transition:all .2s}
+.btnp:hover{background:var(--accent2);transform:translateY(-1px)}
+.btng{background:transparent;color:var(--accent2);border:1px solid var(--border2);border-radius:10px;padding:9px 20px;font-family:var(--mono);font-size:11px;cursor:pointer;letter-spacing:.05em;transition:all .2s}
+.btng:hover{background:var(--surface2)}
+.qresult{text-align:center;padding:22px 0;display:none}
+.qscore-big{font-family:var(--mono);font-size:52px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.qmsg{color:var(--text2);margin-bottom:22px}
+
+.authors{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;width:fit-content}
+.author-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
+.author-name{font-family:var(--mono);font-size:12px;color:var(--accent2);font-weight:700;letter-spacing:.03em}
+.author-nim{font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--surface3);padding:2px 7px;border-radius:4px;border:1px solid var(--border)}
+.author-sep{color:var(--text3)}
+footer{margin-top:70px;padding:28px 0;border-top:1px solid var(--border);text-align:center;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.07em}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="htag">Sistem Telekomunikasi &amp; Komunikasi Data</div>
+  <h1>Line Coding <em>Simulator</em></h1>
+  <p class="sub">Simulasi interaktif · Teori lengkap · Video pembelajaran · Kuis 10 soal</p>
+  <div class="authors">
+    <span class="author-label">Disusun oleh:</span>
+    <span class="author-name">Kankan Kusumawardana</span>
+    <span class="author-nim">NIM 24051030076</span>
+    <span class="author-sep">·</span>
+    <span class="author-name">Ahmad Rizal Ardiyansah</span>
+    <span class="author-nim">NIM 24051030088</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab on"  onclick="sw('theory',this)">📚 Teori &amp; Video</button>
+  <button class="tab"     onclick="sw('compare',this)">📊 Perbandingan</button>
+  <button class="tab"     onclick="sw('sim',this)">⚡ Simulator</button>
+  <button class="tab"     onclick="sw('quiz',this)">🧪 Kuis</button>
+</nav>
+
+<!-- ============================================================ SIMULATOR -->
+<div id="sec-sim" class="sec">
+  <div class="card">
+    <div class="ctitle">Input Bit Stream</div>
+    <div class="row2">
+      <div>
+        <label>Masukkan deretan bit biner (maks 20 bit)</label>
+        <input class="binput" id="bitIn" type="text" placeholder="contoh: 10110010" maxlength="20" autocomplete="off" oninput="onBit()">
+        <div class="hint" id="bhint">Ketik kombinasi 0 dan 1</div>
+      </div>
+      <div>
+        <label>Preset contoh</label>
+        <select onchange="loadPre(this.value)">
+          <option value="">— pilih preset —</option>
+          <option value="10110010">10110010</option>
+          <option value="11001100">11001100</option>
+          <option value="01010101">01010101</option>
+          <option value="11110000">11110000</option>
+          <option value="10000001">10000001 (uji B8ZS)</option>
+          <option value="000000001">000000001 (uji HDB3)</option>
+        </select>
+        <div class="hint" style="margin-top:8px">Pilih contoh bit stream</div>
+      </div>
+    </div>
+    <div class="bits" id="bdis"></div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Pilih Metode Encoding</div>
+    <div class="mgrid">
+      <button class="mb m1 on" onclick="tog('nrz-l',this)"><span class="dot d1"></span>NRZ-L</button>
+      <button class="mb m2 on" onclick="tog('nrz-i',this)"><span class="dot d2"></span>NRZ-I</button>
+      <button class="mb m3 on" onclick="tog('ami',this)"><span class="dot d3"></span>AMI</button>
+      <button class="mb m4 on" onclick="tog('manchester',this)"><span class="dot d4"></span>Manchester</button>
+      <button class="mb m5"    onclick="tog('diff-man',this)"><span class="dot d5"></span>Diff. Manchester</button>
+      <button class="mb m6"    onclick="tog('rz',this)"><span class="dot d6"></span>RZ</button>
+      <button class="mb m7"    onclick="tog('b8zs',this)"><span class="dot d7"></span>B8ZS</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Visualisasi Gelombang</div>
+    <div id="warea"><div class="empty">↑ Masukkan bit stream untuk melihat gelombang</div></div>
+    <div id="sarea" style="display:none"><div class="srow" id="srow"></div></div>
+  </div>
+
+  <div class="card" id="traceCard" style="display:none">
+    <div class="ctitle">Step-by-Step Trace</div>
+    <div id="traceBody"></div>
+  </div>
+</div>
+
+<!-- ============================================================ THEORY -->
+<div id="sec-theory" class="sec on">
+
+  <!-- UNIPOLAR NRZ -->
+  <div class="card">
+    <div class="ctitle">Unipolar</div>
+    <div class="tgrid">
+      <div class="tc t1">
+        <div class="tname">Unipolar NRZ</div>
+        <div class="tfull">Non-Return to Zero — Unipolar</div>
+        <div class="tdesc">Skema paling sederhana. Hanya menggunakan satu polaritas tegangan. Bit <strong>1</strong> direpresentasikan sebagai tegangan positif (+V), bit <strong>0</strong> sebagai 0 volt. Tidak ada transisi kembali ke nol di tengah periode bit.</div>
+        <div class="rulebox"><strong>Aturan:</strong><br>Bit 1 → +V<br>Bit 0 → 0V</div>
+        <div class="badges">
+          <span class="badge bp">✓ Sederhana</span>
+          <span class="badge bn">✗ DC component besar</span>
+          <span class="badge bn">✗ Tidak self-clocking</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/unipolar-nrz.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+      <div class="tc t8">
+        <div class="tname">Unipolar RZ</div>
+        <div class="tfull">Return to Zero — Unipolar</div>
+        <div class="tdesc">Varian unipolar di mana sinyal <em>kembali ke nol</em> di tengah periode bit jika bit bernilai 1. Bit <strong>0</strong> tetap di 0V sepanjang periode. Transisi kembali ke nol membantu sinkronisasi clock.</div>
+        <div class="rulebox"><strong>Aturan:</strong><br>Bit 1 → +V separuh pertama, 0V separuh kedua<br>Bit 0 → 0V sepanjang periode</div>
+        <div class="badges">
+          <span class="badge bp">✓ Membantu sinkronisasi</span>
+          <span class="badge bn">✗ Butuh 2× bandwidth</span>
+          <span class="badge bn">✗ Masih ada DC component</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/rz.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POLAR -->
+  <div class="card">
+    <div class="ctitle">Polar — NRZ</div>
+    <div class="tgrid">
+      <div class="tc t1">
+        <div class="tname">NRZ-L</div>
+        <div class="tfull">Non-Return to Zero — Level</div>
+        <div class="tdesc">Menggunakan dua polaritas tegangan. Level tegangan langsung merepresentasikan nilai bit. Bit <strong>1</strong> → tegangan tinggi (+V), bit <strong>0</strong> → tegangan rendah (−V). Tidak ada transisi di tengah periode.</div>
+        <div class="rulebox"><strong>Aturan:</strong><br>Bit 1 → +V<br>Bit 0 → −V</div>
+        <div class="badges">
+          <span class="badge bp">✓ Efisiensi bandwidth tinggi</span>
+          <span class="badge bn">✗ DC component</span>
+          <span class="badge bn">✗ Synchronization problem</span>
+          <span class="badge bm">≈ Internal data bus</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/nrz-l.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+      <div class="tc t2">
+        <div class="tname">NRZ-I</div>
+        <div class="tfull">Non-Return to Zero — Invert on 1</div>
+        <div class="tdesc">Menggunakan <em>transisi</em> bukan level absolut. Transisi terjadi di awal periode bit ketika bit <strong>1</strong>. Bit <strong>0</strong> tidak menghasilkan transisi. Lebih tahan terhadap pembalikan polaritas kabel.</div>
+        <div class="rulebox"><strong>Aturan:</strong><br>Bit 1 → Transisi (invert level saat ini)<br>Bit 0 → Tidak ada transisi</div>
+        <div class="badges">
+          <span class="badge bp">✓ Tahan polar inversion</span>
+          <span class="badge bn">✗ String 0 panjang = masalah sync</span>
+          <span class="badge bm">≈ USB 2.0</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/nrz-i.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIPOLAR -->
+  <div class="card">
+    <div class="ctitle">Bipolar</div>
+    <div class="tgrid">
+      <div class="tc t3">
+        <div class="tname">AMI</div>
+        <div class="tfull">Alternate Mark Inversion</div>
+        <div class="tdesc">Skema tiga level. Bit <strong>0</strong> selalu 0V. Bit <strong>1</strong> (mark) bergantian antara +V dan −V pada setiap kemunculan. Eliminasi komponen DC karena pulsa positif dan negatif seimbang.</div>
+        <div class="rulebox"><strong>Aturan:</strong><br>Bit 0 → 0V (netral)<br>Bit 1 → +V lalu −V lalu +V ... (alternating)</div>
+        <div class="badges">
+          <span class="badge bp">✓ DC-free</span>
+          <span class="badge bp">✓ Error detection</span>
+          <span class="badge bn">✗ String 0 = sync problem</span>
+          <span class="badge bm">≈ T1/E1, ISDN</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/ami.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIPHASE -->
+  <div class="card">
+    <div class="ctitle">Biphase (Manchester)</div>
+    <div class="tgrid">
+      <div class="tc t4">
+        <div class="tname">Manchester Encoding</div>
+        <div class="tfull">Biphase — Manchester</div>
+        <div class="tdesc">Setiap periode bit dibagi dua. Selalu ada transisi di <em>tengah</em> periode (self-clocking). Bit <strong>1</strong>: transisi tinggi→rendah. Bit <strong>0</strong>: transisi rendah→tinggi (standar IEEE 802.3).</div>
+        <div class="rulebox"><strong>Aturan (IEEE 802.3):</strong><br>Bit 1 → H pada awal, transisi ke L di tengah<br>Bit 0 → L pada awal, transisi ke H di tengah</div>
+        <div class="badges">
+          <span class="badge bp">✓ Self-clocking</span>
+          <span class="badge bp">✓ DC-free</span>
+          <span class="badge bn">✗ 2× bandwidth</span>
+          <span class="badge bm">≈ Ethernet 10BASE-T</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/manchester.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+      <div class="tc t5">
+        <div class="tname">Differential Manchester</div>
+        <div class="tfull">Biphase — Differential Manchester</div>
+        <div class="tdesc">Transisi tengah hanya sebagai clock. Informasi dikodekan dari ada/tidaknya transisi di <em>awal</em> periode. Bit <strong>0</strong>: ada transisi di awal. Bit <strong>1</strong>: tidak ada transisi di awal.</div>
+        <div class="rulebox"><strong>Aturan:</strong><br>Bit 0 → Ada transisi di awal periode<br>Bit 1 → Tidak ada transisi di awal periode<br>Transisi tengah = selalu ada (clock)</div>
+        <div class="badges">
+          <span class="badge bp">✓ Self-clocking</span>
+          <span class="badge bp">✓ Tahan polar inversion</span>
+          <span class="badge bn">✗ 2× bandwidth</span>
+          <span class="badge bm">≈ Token Ring IEEE 802.5</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/diff-manchester.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRAMBLING -->
+  <div class="card">
+    <div class="ctitle">Scrambling</div>
+    <div class="tgrid">
+      <div class="tc t6">
+        <div class="tname">B8ZS</div>
+        <div class="tfull">Bipolar 8-Zero Substitution</div>
+        <div class="tdesc">Teknik scrambling berbasis AMI. Ketika ditemukan <strong>8 bit nol berurutan</strong>, digantikan dengan pola khusus <code>000VB0VB</code>. V = violation (polaritas sama dengan sebelumnya), B = balancing (polaritas berlawanan). Digunakan di Amerika Utara (T1).</div>
+        <div class="rulebox"><strong>Substitusi:</strong><br>8 nol berurutan → 000VB0VB<br>Jika last pulse +: 000+−0−+<br>Jika last pulse −: 000−+0+−</div>
+        <div class="badges">
+          <span class="badge bp">✓ Solusi string zeros AMI</span>
+          <span class="badge bp">✓ Mempertahankan DC-balance</span>
+          <span class="badge bn">✗ Hanya untuk 8 nol</span>
+          <span class="badge bm">≈ T1 line (North America)</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/b8zs.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+      <div class="tc t7">
+        <div class="tname">HDB3</div>
+        <div class="tfull">High Density Bipolar 3</div>
+        <div class="tdesc">Teknik scrambling berbasis AMI populer di Eropa (E1). Ketika ditemukan <strong>4 bit nol berurutan</strong>, digantikan dengan pola <code>000V</code> atau <code>B00V</code> tergantung jumlah pulsa (+/−) sejak substitusi terakhir untuk menjaga keseimbangan DC.</div>
+        <div class="rulebox"><strong>Substitusi 4 nol:</strong><br>Jika pulsa terakhir ganjil → 000V<br>Jika pulsa terakhir genap → B00V<br>V = violation, B = balancing</div>
+        <div class="badges">
+          <span class="badge bp">✓ Solusi 4 nol berurutan</span>
+          <span class="badge bp">✓ DC-balanced</span>
+          <span class="badge bn">✗ Lebih kompleks dari B8ZS</span>
+          <span class="badge bm">≈ E1 line (Eropa)</span>
+        </div>
+        <div class="vid-wrap">
+          <video controls style="width:100%;height:100%;display:block;background:#000;border:none" preload="metadata"><source src="videos/hdb3.mp4" type="video/mp4">Browser Anda tidak mendukung tag video.</video></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /theory -->
+
+<!-- ============================================================ COMPARE -->
+<div id="sec-compare" class="sec">
+  <div class="card">
+    <div class="ctitle">Tabel Perbandingan Lengkap</div>
+    <div style="overflow-x:auto">
+      <table class="ctable">
+        <thead>
+          <tr>
+            <th>Metode</th><th>Kategori</th><th>Level</th><th>DC Free</th><th>Self-Clock</th><th>Error Det.</th><th>Bandwidth</th><th>Aplikasi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mtag" style="background:rgba(79,111,255,.15);color:var(--c1)">Unipolar NRZ</span></td>
+            <td>Unipolar</td><td>2</td>
+            <td><span class="crs">✗</span></td><td><span class="crs">✗</span></td><td><span class="crs">✗</span></td>
+            <td>B baud</td><td>Sinyal sederhana</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(6,214,160,.12);color:var(--c8)">Unipolar RZ</span></td>
+            <td>Unipolar</td><td>2</td>
+            <td><span class="crs">✗</span></td><td><span class="mid">~</span></td><td><span class="crs">✗</span></td>
+            <td>2B baud</td><td>Komunikasi optik</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(79,111,255,.15);color:var(--c1)">NRZ-L</span></td>
+            <td>Polar</td><td>2</td>
+            <td><span class="crs">✗</span></td><td><span class="crs">✗</span></td><td><span class="crs">✗</span></td>
+            <td>B baud</td><td>Internal data bus</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(0,201,167,.12);color:var(--c2)">NRZ-I</span></td>
+            <td>Polar</td><td>2</td>
+            <td><span class="mid">~</span></td><td><span class="crs">✗</span></td><td><span class="crs">✗</span></td>
+            <td>B baud</td><td>USB 2.0</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(255,107,107,.12);color:var(--c3)">AMI</span></td>
+            <td>Bipolar</td><td>3</td>
+            <td><span class="tic">✓</span></td><td><span class="crs">✗</span></td><td><span class="tic">✓</span></td>
+            <td>B baud</td><td>T1/E1, ISDN</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(255,209,102,.12);color:var(--c4)">Manchester</span></td>
+            <td>Biphase</td><td>2</td>
+            <td><span class="tic">✓</span></td><td><span class="tic">✓</span></td><td><span class="mid">~</span></td>
+            <td>2B baud</td><td>Ethernet 10BASE-T</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(199,125,255,.12);color:var(--c5)">Diff. Manchester</span></td>
+            <td>Biphase</td><td>2</td>
+            <td><span class="tic">✓</span></td><td><span class="tic">✓</span></td><td><span class="mid">~</span></td>
+            <td>2B baud</td><td>Token Ring</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(255,159,28,.12);color:var(--c6)">B8ZS</span></td>
+            <td>Scrambling</td><td>3</td>
+            <td><span class="tic">✓</span></td><td><span class="crs">✗</span></td><td><span class="tic">✓</span></td>
+            <td>B baud</td><td>T1 (North America)</td>
+          </tr>
+          <tr>
+            <td><span class="mtag" style="background:rgba(231,111,81,.12);color:var(--c7)">HDB3</span></td>
+            <td>Scrambling</td><td>3</td>
+            <td><span class="tic">✓</span></td><td><span class="crs">✗</span></td><td><span class="tic">✓</span></td>
+            <td>B baud</td><td>E1 (Eropa)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Diagram Klasifikasi</div>
+    <div style="overflow-x:auto;padding:8px 0">
+      <svg viewBox="0 0 760 320" width="100%" style="font-family:var(--mono);max-width:760px">
+        <defs>
+          <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="rgba(90,110,210,0.3)"/>
+          </marker>
+        </defs>
+        <!-- root -->
+        <rect x="310" y="8" width="140" height="34" rx="8" fill="rgba(79,111,255,.14)" stroke="rgba(79,111,255,.35)" stroke-width="1"/>
+        <text x="380" y="30" text-anchor="middle" fill="#7b9fff" font-size="12">Line Coding</text>
+        <!-- lines down -->
+        <line x1="380" y1="42" x2="380" y2="66" stroke="rgba(90,110,210,.25)" stroke-width="1"/>
+        <line x1="90" y1="66" x2="660" y2="66" stroke="rgba(90,110,210,.25)" stroke-width="1"/>
+        <line x1="90"  y1="66" x2="90"  y2="86" stroke="rgba(90,110,210,.25)" stroke-width="1"/>
+        <line x1="260" y1="66" x2="260" y2="86" stroke="rgba(90,110,210,.25)" stroke-width="1"/>
+        <line x1="460" y1="66" x2="460" y2="86" stroke="rgba(90,110,210,.25)" stroke-width="1"/>
+        <line x1="660" y1="66" x2="660" y2="86" stroke="rgba(90,110,210,.25)" stroke-width="1"/>
+        <!-- L1 boxes -->
+        <rect x="30"  y="86" width="120" height="32" rx="7" fill="rgba(79,111,255,.09)" stroke="rgba(79,111,255,.2)" stroke-width="1"/>
+        <text x="90"  y="107" text-anchor="middle" fill="#8b95b0" font-size="10">Unipolar</text>
+        <rect x="200" y="86" width="120" height="32" rx="7" fill="rgba(79,111,255,.09)" stroke="rgba(79,111,255,.2)" stroke-width="1"/>
+        <text x="260" y="107" text-anchor="middle" fill="#8b95b0" font-size="10">Polar / NRZ</text>
+        <rect x="400" y="86" width="120" height="32" rx="7" fill="rgba(79,111,255,.09)" stroke="rgba(79,111,255,.2)" stroke-width="1"/>
+        <text x="460" y="107" text-anchor="middle" fill="#8b95b0" font-size="10">Bipolar/Biphase</text>
+        <rect x="600" y="86" width="120" height="32" rx="7" fill="rgba(79,111,255,.09)" stroke="rgba(79,111,255,.2)" stroke-width="1"/>
+        <text x="660" y="107" text-anchor="middle" fill="#8b95b0" font-size="10">Scrambling</text>
+        <!-- Unipolar children -->
+        <line x1="90" y1="118" x2="90" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="50" y1="140" x2="130" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="50"  y1="140" x2="50"  y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="130" y1="140" x2="130" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <rect x="10"  y="158" width="80" height="28" rx="6" fill="rgba(79,111,255,.12)" stroke="rgba(79,111,255,.28)" stroke-width="1"/>
+        <text x="50" y="176" text-anchor="middle" fill="var(--c1)" font-size="9.5" font-weight="bold">NRZ</text>
+        <rect x="98"  y="158" width="65" height="28" rx="6" fill="rgba(6,214,160,.1)" stroke="rgba(6,214,160,.25)" stroke-width="1"/>
+        <text x="130" y="176" text-anchor="middle" fill="var(--c8)" font-size="9.5" font-weight="bold">RZ</text>
+        <!-- Polar children -->
+        <line x1="260" y1="118" x2="260" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="210" y1="140" x2="310" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="210" y1="140" x2="210" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="310" y1="140" x2="310" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <rect x="168" y="158" width="85" height="28" rx="6" fill="rgba(79,111,255,.12)" stroke="rgba(79,111,255,.28)" stroke-width="1"/>
+        <text x="210" y="176" text-anchor="middle" fill="var(--c1)" font-size="9.5" font-weight="bold">NRZ-L</text>
+        <rect x="270" y="158" width="80" height="28" rx="6" fill="rgba(0,201,167,.1)" stroke="rgba(0,201,167,.25)" stroke-width="1"/>
+        <text x="310" y="176" text-anchor="middle" fill="var(--c2)" font-size="9.5" font-weight="bold">NRZ-I</text>
+        <!-- Bipolar children -->
+        <line x1="460" y1="118" x2="460" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="410" y1="140" x2="510" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="410" y1="140" x2="410" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="510" y1="140" x2="510" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <rect x="370" y="158" width="80" height="28" rx="6" fill="rgba(255,107,107,.12)" stroke="rgba(255,107,107,.28)" stroke-width="1"/>
+        <text x="410" y="176" text-anchor="middle" fill="var(--c3)" font-size="9.5" font-weight="bold">AMI</text>
+        <rect x="458" y="158" width="105" height="28" rx="6" fill="rgba(255,209,102,.1)" stroke="rgba(255,209,102,.25)" stroke-width="1"/>
+        <text x="510" y="170" text-anchor="middle" fill="var(--c4)" font-size="8.5" font-weight="bold">Manchester</text>
+        <text x="510" y="181" text-anchor="middle" fill="var(--c5)" font-size="8" font-weight="bold">+Differential</text>
+        <!-- Scrambling children -->
+        <line x1="660" y1="118" x2="660" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="620" y1="140" x2="700" y2="140" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="620" y1="140" x2="620" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <line x1="700" y1="140" x2="700" y2="158" stroke="rgba(90,110,210,.2)" stroke-width="1"/>
+        <rect x="578" y="158" width="84" height="28" rx="6" fill="rgba(255,159,28,.1)" stroke="rgba(255,159,28,.25)" stroke-width="1"/>
+        <text x="620" y="176" text-anchor="middle" fill="var(--c6)" font-size="9.5" font-weight="bold">B8ZS</text>
+        <rect x="668" y="158" width="65" height="28" rx="6" fill="rgba(231,111,81,.1)" stroke="rgba(231,111,81,.25)" stroke-width="1"/>
+        <text x="700" y="176" text-anchor="middle" fill="var(--c7)" font-size="9.5" font-weight="bold">HDB3</text>
+        <text x="380" y="300" text-anchor="middle" fill="rgba(90,110,210,.25)" font-size="10">Hierarki klasifikasi metode line coding</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ QUIZ -->
+<div id="sec-quiz" class="sec">
+  <div class="qcard">
+    <div class="qprog">
+      <div class="pscore" id="qsc">Skor: 0/0</div>
+      <div class="pbar"><div class="pfill" id="qpf" style="width:0%"></div></div>
+      <div class="pscore" id="qnum">Soal 1/10</div>
+    </div>
+    <div id="qbody">
+      <p class="qq" id="qqq"></p>
+      <div class="qsub" id="qsub"></div>
+      <div class="qopts" id="qopts"></div>
+      <div class="qfb" id="qfb"></div>
+      <button class="btnp" id="qnext" onclick="nextQ()" style="display:none">Soal Berikutnya →</button>
+    </div>
+    <div class="qresult" id="qresult">
+      <div class="qscore-big" id="qsbig"></div>
+      <div class="qmsg" id="qmsg"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+        <button class="btnp" onclick="initQ()">🔀 Acak &amp; Ulangi</button>
+        <button class="btng" onclick="initQ(true)">↺ Urutan Sama</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<footer><div class="wrap">Line Coding Simulator · Sistem Telekomunikasi &amp; Komunikasi Data · Interactive Learning</div></footer>
+
+<script>
+// ==============================
+// GLOBALS
+// ==============================
+let bits=[], active=new Set(['nrz-l','nrz-i','ami','manchester']);
+const BW=58, CH=70;
+const COL={'nrz-l':'#4f6fff','nrz-i':'#00c9a7','ami':'#ff6b6b','manchester':'#ffd166','diff-man':'#c77dff','rz':'#ff9f1c','b8zs':'#e76f51'};
+const LAB={'nrz-l':'NRZ-L','nrz-i':'NRZ-I','ami':'AMI','manchester':'Manchester','diff-man':'Diff. Manchester','rz':'RZ','b8zs':'B8ZS'};
+const ORDER=['nrz-l','nrz-i','ami','manchester','diff-man','rz','b8zs'];
+
+// ==============================
+// TABS
+// ==============================
+function sw(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('sec-'+id).classList.add('on');
+  el.classList.add('on');
+  if(id==='quiz') initQ();
+}
+
+// ==============================
+// BIT INPUT
+// ==============================
+function onBit(){
+  let v=document.getElementById('bitIn').value.replace(/[^01]/g,'');
+  document.getElementById('bitIn').value=v;
+  bits=v.split('').map(Number);
+  renderBits(); renderAll();
+  document.getElementById('bhint').textContent=bits.length?`${bits.length} bit · ${bits.filter(b=>b).length} satu · ${bits.filter(b=>!b).length} nol`:'Ketik kombinasi 0 dan 1';
+}
+function loadPre(v){if(!v)return;document.getElementById('bitIn').value=v;onBit();}
+function renderBits(){
+  const el=document.getElementById('bdis');
+  el.innerHTML=bits.map(b=>`<div class="bc b${b}">${b}</div>`).join('');
+}
+
+// ==============================
+// METHOD TOGGLE
+// ==============================
+function tog(m,btn){
+  if(active.has(m)){if(active.size===1)return;active.delete(m);btn.classList.remove('on');}
+  else{active.add(m);btn.classList.add('on');}
+  renderAll();
+}
+
+// ==============================
+// ENCODERS
+// ==============================
+function encNRZL(b){
+  let p=[];b.forEach((x,i)=>{let v=x?1:-1;p.push({x:i*BW,y:v},{x:(i+1)*BW,y:v});});return p;
+}
+function encNRZI(b){
+  let p=[],lv=-1;
+  b.forEach((x,i)=>{if(x)lv=-lv;p.push({x:i*BW,y:lv},{x:(i+1)*BW,y:lv});});return p;
+}
+function encAMI(b){
+  let p=[],last=1;
+  b.forEach((x,i)=>{let v=x?(last=-last,last):0;p.push({x:i*BW,y:v},{x:(i+1)*BW,y:v});});return p;
+}
+function encRZ(b){
+  let p=[];
+  b.forEach((x,i)=>{
+    let x0=i*BW,xm=x0+BW/2,x1=(i+1)*BW;
+    if(x){p.push({x:x0,y:1},{x:xm,y:1},{x:xm,y:0},{x:x1,y:0});}
+    else{p.push({x:x0,y:0},{x:x1,y:0});}
+  });return p;
+}
+function encManchester(b){
+  let p=[];
+  b.forEach((x,i)=>{
+    let x0=i*BW,xm=x0+BW/2,x1=(i+1)*BW;
+    if(x){p.push({x:x0,y:1},{x:xm,y:1},{x:xm,y:-1},{x:x1,y:-1});}
+    else{p.push({x:x0,y:-1},{x:xm,y:-1},{x:xm,y:1},{x:x1,y:1});}
+  });return p;
+}
+function encDiffMan(b){
+  let p=[],lv=-1;
+  b.forEach((x,i)=>{
+    let x0=i*BW,xm=x0+BW/2,x1=(i+1)*BW;
+    if(!x)lv=-lv;
+    p.push({x:x0,y:lv},{x:xm,y:lv},{x:xm,y:-lv},{x:x1,y:-lv});
+    lv=-lv;
+  });return p;
+}
+function encB8ZS(b){
+  // AMI-based with 8-zero substitution
+  let sig=[],last=1;
+  let i=0;
+  while(i<b.length){
+    if(b[i]===0){
+      // check for 8 consecutive zeros
+      let zeros=0;
+      for(let j=i;j<b.length&&b[j]===0;j++)zeros++;
+      if(zeros>=8){
+        // substitute: 000VB0VB
+        // V=violation (same as last), B=balancing (opposite of last)
+        let seq=[0,0,0,last,-last,0,-last,last];
+        last=last; // after B8ZS last non-zero is the B pulse
+        for(let k=0;k<8;k++)sig.push(seq[k]);
+        last=seq[7]; // update last to the last non-zero
+        i+=8;
+      } else {
+        sig.push(0); i++;
+      }
+    } else {
+      last=-last; sig.push(last); i++;
+    }
+  }
+  let p=[];
+  sig.forEach((v,i)=>{p.push({x:i*BW,y:v},{x:(i+1)*BW,y:v});});
+  return p;
+}
+
+function getEnc(m,b){
+  switch(m){
+    case'nrz-l':return encNRZL(b);
+    case'nrz-i':return encNRZI(b);
+    case'ami':return encAMI(b);
+    case'manchester':return encManchester(b);
+    case'diff-man':return encDiffMan(b);
+    case'rz':return encRZ(b);
+    case'b8zs':return encB8ZS(b);
+  }
+  return [];
+}
+
+// ==============================
+// DRAW
+// ==============================
+function draw(canvas,pts,col){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,mid=H/2,amp=mid-14;
+  ctx.clearRect(0,0,W,H);
+  // zero line
+  ctx.strokeStyle='rgba(90,110,200,.1)';ctx.lineWidth=.5;
+  ctx.beginPath();ctx.moveTo(40,mid);ctx.lineTo(W,mid);ctx.stroke();
+  // level lines
+  ctx.strokeStyle='rgba(90,110,200,.06)';
+  ctx.beginPath();ctx.moveTo(40,mid-amp);ctx.lineTo(W,mid-amp);ctx.moveTo(40,mid+amp);ctx.lineTo(W,mid+amp);ctx.stroke();
+  // labels
+  ctx.fillStyle='rgba(139,149,176,.5)';ctx.font='8px Space Mono,monospace';ctx.textAlign='right';
+  ctx.fillText('+V',37,mid-amp+3);ctx.fillText('0V',37,mid+3);ctx.fillText('-V',37,mid+amp+3);
+  if(!pts||!pts.length)return;
+  const ty=v=>mid-v*amp, tx=x=>x+40;
+  // period dividers
+  ctx.strokeStyle='rgba(90,110,200,.12)';ctx.lineWidth=.5;ctx.setLineDash([2,3]);
+  for(let i=0;i<=bits.length;i++){let x=tx(i*BW);ctx.beginPath();ctx.moveTo(x,5);ctx.lineTo(x,H-5);ctx.stroke();}
+  ctx.setLineDash([]);
+  // waveform
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.shadowColor=col;ctx.shadowBlur=5;ctx.lineJoin='miter';
+  ctx.beginPath();
+  pts.forEach((pt,i)=>{
+    let x=tx(pt.x),y=ty(pt.y);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.stroke();ctx.shadowBlur=0;
+  // bit labels
+  ctx.fillStyle='rgba(139,149,176,.55)';ctx.font='8px Space Mono,monospace';ctx.textAlign='center';
+  bits.forEach((b,i)=>ctx.fillText(b,tx(i*BW+BW/2),H-2));
+}
+
+// ==============================
+// RENDER ALL
+// ==============================
+function renderAll(){
+  const wa=document.getElementById('warea'),sa=document.getElementById('sarea'),tc=document.getElementById('traceCard');
+  if(!bits.length){
+    wa.innerHTML='<div class="empty">↑ Masukkan bit stream untuk melihat gelombang</div>';
+    sa.style.display='none';tc.style.display='none';return;
+  }
+  const methods=ORDER.filter(m=>active.has(m));
+  const cW=bits.length*BW+42;
+  let html='<div class="wbox">';
+  methods.forEach(m=>{
+    html+=`<div class="wrow" style="margin-bottom:14px"><div class="wlabel" style="color:${COL[m]}">${LAB[m]}</div><canvas class="wc" id="cv-${m}" width="${cW}" height="${CH}"></canvas></div>`;
+  });
+  html+='</div>';
+  wa.innerHTML=html;
+  methods.forEach(m=>{
+    const c=document.getElementById('cv-'+m);
+    if(c)draw(c,getEnc(m,bits),COL[m]);
+  });
+  // stats
+  sa.style.display='block';
+  const ones=bits.filter(b=>b).length,zeros=bits.length-ones;
+  document.getElementById('srow').innerHTML=`
+    <div class="sc">Panjang: <b>${bits.length}</b></div>
+    <div class="sc">Bit 1: <b>${ones}</b></div>
+    <div class="sc">Bit 0: <b>${zeros}</b></div>
+    <div class="sc">Metode aktif: <b>${methods.length}</b></div>
+    <div class="sc">Est. Bandwidth (NRZ): <b>${bits.length} bps = ${bits.length} baud</b></div>
+  `;
+  // trace
+  tc.style.display='block';
+  let lvls={};
+  methods.forEach(m=>lvls[m]=getLevels(m,bits));
+  let th='<div class="trace-wrap"><table class="tr"><thead><tr><th>#</th><th>Bit</th>';
+  methods.forEach(m=>`${th+=`<th style="color:${COL[m]}">${LAB[m]}</th>`}`);
+  th+='</tr></thead><tbody>';
+  bits.forEach((b,i)=>{
+    let bcolor=b?'var(--accent2)':'var(--text3)';
+    th+=`<tr><td style="color:var(--text3)">${i+1}</td><td style="color:${bcolor}">${b}</td>`;
+    methods.forEach(m=>{
+      let v=lvls[m][i],s=v===1?'+V':v===-1?'-V':'0V',col=v===1?'var(--accent2)':v===-1?'var(--c3)':'var(--text3)';
+      if(typeof v==='string'){s=v;col='var(--text2)';}
+      th+=`<td style="color:${col}">${s}</td>`;
+    });
+    th+='</tr>';
+  });
+  th+='</tbody></table></div>';
+  document.getElementById('traceBody').innerHTML=th;
+}
+
+function getLevels(m,b){
+  if(m==='nrz-l')return b.map(x=>x?1:-1);
+  if(m==='nrz-i'){let lv=-1;return b.map(x=>{if(x)lv=-lv;return lv;});}
+  if(m==='ami'){let l=1;return b.map(x=>x?(l=-l,l):0);}
+  if(m==='rz')return b.map(x=>x?'H→0':'0');
+  if(m==='manchester')return b.map(x=>x?'H→L':'L→H');
+  if(m==='diff-man')return b.map(x=>x?'Tetap':'Trans');
+  if(m==='b8zs')return b.map((_,i)=>'see wave');
+  return b.map(()=>'—');
+}
+
+
+// ==============================
+// QUIZ DATA — 10 VARIED QUESTIONS
+// ==============================
+const QS=[
+  {
+    q:"Pada AMI encoding, jika bit stream adalah 1 0 1 1 0 1, urutan level tegangan yang benar adalah?",
+    sub:"Bit stream: 1 0 1 1 0 1",
+    opts:["+V, 0V, -V, +V, 0V, -V","+V, 0V, -V, +V, 0V, +V","-V, 0V, +V, -V, 0V, +V","+V, 0V, +V, -V, 0V, -V"],
+    ans:0,
+    exp:"AMI: setiap bit 1 bergantian antara +V dan -V. Bit 0 selalu 0V. Urutan: 1→+V, 0→0V, 1→-V, 1→+V, 0→0V, 1→-V."
+  },
+  {
+    q:"Metode line coding apa yang digunakan pada Ethernet 10BASE-T (IEEE 802.3)?",
+    sub:"Pertanyaan konsep standar jaringan",
+    opts:["NRZ-L","AMI","Manchester Encoding","Differential Manchester"],
+    ans:2,
+    exp:"Ethernet 10BASE-T menggunakan Manchester Encoding karena sifat self-clocking yang menjamin sinkronisasi tanpa komponen DC."
+  },
+  {
+    q:"Pada NRZ-I, dimulai dari level rendah (-V), apa output untuk bit stream: 1 0 0 1 1?",
+    sub:"Bit stream: 1 0 0 1 1 | Level awal: -V",
+    opts:["+V, +V, +V, -V, +V","+V, +V, +V, -V, -V","+V, +V, +V, +V, -V","-V, -V, -V, +V, -V"],
+    ans:0,
+    exp:"NRZ-I transisi saat bit=1. Mulai -V: Bit1→+V, Bit0→+V(tetap), Bit0→+V(tetap), Bit1→-V, Bit1→+V. Jadi: +V,+V,+V,-V,+V."
+  },
+  {
+    q:"B8ZS menggantikan berapa bit nol berurutan dengan pola substitusi khusus?",
+    sub:"Pertanyaan teknik scrambling B8ZS",
+    opts:["4 bit nol","6 bit nol","8 bit nol","10 bit nol"],
+    ans:2,
+    exp:"B8ZS (Bipolar 8-Zero Substitution) menggantikan tepat 8 bit nol berurutan dengan pola 000VB0VB. V=violation, B=balancing."
+  },
+  {
+    q:"Keunggulan utama Manchester Encoding dibandingkan NRZ-L adalah?",
+    sub:"Pertanyaan perbandingan metode",
+    opts:["Membutuhkan bandwidth lebih rendah","Memiliki self-clocking dan tidak ada komponen DC","Dapat merepresentasikan 3 level tegangan","Mendeteksi error lebih akurat dari AMI"],
+    ans:1,
+    exp:"Manchester memiliki transisi di tengah setiap periode bit sehingga self-clocking dan DC-free karena setiap bit memiliki kontribusi tegangan positif dan negatif seimbang."
+  },
+  {
+    q:"HDB3 digunakan sebagai standar di wilayah mana dan menggantikan berapa bit nol berurutan?",
+    sub:"Pertanyaan standar regional scrambling",
+    opts:["Amerika Utara, 8 bit nol","Eropa, 4 bit nol","Asia, 6 bit nol","Global, 3 bit nol"],
+    ans:1,
+    exp:"HDB3 (High Density Bipolar 3) adalah standar Eropa digunakan pada jalur E1. Menggantikan 4 bit nol berurutan dengan 000V atau B00V."
+  },
+  {
+    q:"Pada Manchester Encoding (IEEE 802.3), bagaimana bit '0' direpresentasikan?",
+    sub:"Pertanyaan aturan encoding Manchester",
+    opts:["Tegangan tinggi (+V) sepanjang periode","Transisi dari tinggi ke rendah di tengah periode","Transisi dari rendah ke tinggi di tengah periode","Tidak ada perubahan tegangan"],
+    ans:2,
+    exp:"IEEE 802.3: bit 0 = level rendah di paruh pertama lalu transisi naik ke level tinggi di tengah. Bit 1 adalah kebalikannya (H→L)."
+  },
+  {
+    q:"Apa kelemahan utama Unipolar NRZ yang menyebabkannya jarang digunakan dalam komunikasi data modern?",
+    sub:"Pertanyaan kelemahan Unipolar NRZ",
+    opts:["Terlalu kompleks untuk diimplementasikan","Memiliki komponen DC besar dan tidak self-clocking","Membutuhkan 3 level tegangan","Tidak dapat merepresentasikan bit 1"],
+    ans:1,
+    exp:"Unipolar NRZ memiliki komponen DC signifikan yang merusak komponen AC-coupled seperti transformator, dan tidak self-clocking sehingga string panjang menyebabkan hilangnya sinkronisasi."
+  },
+  {
+    q:"Pada Differential Manchester, cara merepresentasikan bit '0' dan '1' berbeda dalam hal?",
+    sub:"Bit stream: 0 1 0 — analisis transisi awal periode",
+    opts:[
+      "Bit 0: arah transisi tengah turun, Bit 1: arah transisi tengah naik",
+      "Bit 0: ada transisi di awal periode, Bit 1: tidak ada transisi di awal",
+      "Bit 0: tidak ada transisi sama sekali, Bit 1: ada transisi di tengah",
+      "Bit 0 dan 1 dibedakan dari level tegangan awal periode"
+    ],
+    ans:1,
+    exp:"Differential Manchester: transisi tengah selalu ada (clock). Perbedaan data di awal periode: Bit 0 → ada transisi di awal. Bit 1 → tidak ada transisi di awal."
+  },
+  {
+    q:"Berapa bandwidth minimum yang dibutuhkan Manchester Encoding dibandingkan NRZ untuk data rate yang sama?",
+    sub:"Pertanyaan efisiensi bandwidth",
+    opts:["Sama persis (1×)","Dua kali lipat (2×)","Tiga kali lipat (3×)","Setengahnya (0.5×)"],
+    ans:1,
+    exp:"Manchester membutuhkan 2× bandwidth NRZ karena setiap bit dibagi menjadi dua transisi. Untuk 1 Mbps, Manchester butuh 2 Mbaud sedangkan NRZ hanya 1 Mbaud."
+  },
+  {
+    q:"Pada RZ (Return-to-Zero) encoding, apa yang terjadi di tengah periode bit untuk bit bernilai 1?",
+    sub:"Pertanyaan aturan RZ encoding",
+    opts:["Sinyal tetap pada +V","Sinyal kembali ke 0V di tengah periode","Sinyal berubah ke -V di tengah periode","Sinyal melakukan transisi dua kali"],
+    ans:1,
+    exp:"Pada RZ, bit 1 ditransmisikan sebagai +V pada separuh pertama periode, kemudian sinyal KEMBALI ke 0V (return to zero) pada separuh kedua. Bit 0 tetap 0V sepanjang periode."
+  },
+  {
+    q:"Apa perbedaan utama antara B8ZS dan HDB3 dalam hal teknik scrambling?",
+    sub:"Pertanyaan perbandingan B8ZS vs HDB3",
+    opts:[
+      "B8ZS untuk 4 nol, HDB3 untuk 8 nol",
+      "B8ZS untuk 8 nol (T1/Amerika), HDB3 untuk 4 nol (E1/Eropa)",
+      "B8ZS dan HDB3 keduanya untuk 8 nol berurutan",
+      "B8ZS digunakan di Eropa, HDB3 di Amerika"
+    ],
+    ans:1,
+    exp:"B8ZS mengganti 8 nol berurutan, digunakan di sistem T1 Amerika Utara. HDB3 mengganti 4 nol berurutan, digunakan di sistem E1 Eropa. Keduanya berbasis AMI bipolar."
+  },
+  {
+    q:"Mengapa AMI disebut 'DC-free' (bebas komponen DC)?",
+    sub:"Pertanyaan konsep AMI",
+    opts:[
+      "Karena AMI selalu menggunakan tegangan 0V",
+      "Karena pulsa +V dan -V bergantian sehingga rata-rata tegangan mendekati nol",
+      "Karena AMI menggunakan Manchester di dalamnya",
+      "Karena bit 0 selalu direpresentasikan sebagai +V/2"
+    ],
+    ans:1,
+    exp:"AMI DC-free karena setiap mark (bit 1) bergantian antara +V dan -V. Dalam jangka panjang, jumlah pulsa positif dan negatif seimbang, sehingga rata-rata tegangan (komponen DC) mendekati nol."
+  },
+  {
+    q:"Metode line coding mana yang digunakan pada Token Ring (IEEE 802.5)?",
+    sub:"Pertanyaan aplikasi line coding",
+    opts:["Manchester Encoding","NRZ-I","Differential Manchester","AMI"],
+    ans:2,
+    exp:"Token Ring (IEEE 802.5) menggunakan Differential Manchester Encoding karena keunggulannya dalam self-clocking dan ketahanan terhadap pembalikan polaritas (polar inversion immunity)."
+  },
+  {
+    q:"Pada NRZ-L dengan bit stream 1 1 0 0 1, berapa kali terjadi transisi sinyal?",
+    sub:"Bit stream: 1 1 0 0 1",
+    opts:["1 kali","2 kali","3 kali","4 kali"],
+    ans:1,
+    exp:"NRZ-L: 1=+V, 0=-V. Urutan level: +V,+V,-V,-V,+V. Transisi: bit1→2 (+V→+V tidak), bit2→3 (+V→-V YA), bit3→4 (-V→-V tidak), bit4→5 (-V→+V YA). Total = 2 transisi."
+  }
+];
+
+// Shuffle array Fisher-Yates
+function shuffle(arr){
+  let a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+let QST={cur:0,score:0,done:false};
+let activeQS=[];     // soal yang sudah diacak
+let activeOpts=[];   // pilihan yang sudah diacak per soal (simpan mapping jawaban)
+
+function initQ(keepOrder=false){
+  // Acak 10 soal dari 15 soal bank, atau pakai urutan sama
+  if(keepOrder && activeQS.length>0){
+    // reset state saja, soal urutan sama
+  } else {
+    activeQS = shuffle(QS).slice(0,10);
+  }
+  // Acak pilihan untuk setiap soal
+  activeOpts = activeQS.map(q => {
+    const indices = q.opts.map((_,i)=>i);
+    const shuffledIdx = shuffle(indices);
+    const newCorrect = shuffledIdx.indexOf(q.ans);
+    return { shuffledIdx, newCorrect };
+  });
+  QST={cur:0,score:0,done:false};
+  document.getElementById('qbody').style.display='block';
+  document.getElementById('qresult').style.display='none';
+  renderQ();
+}
+
+function renderQ(){
+  const q=activeQS[QST.cur];
+  const opt=activeOpts[QST.cur];
+  document.getElementById('qqq').textContent=q.q;
+  document.getElementById('qsub').textContent=q.sub;
+  document.getElementById('qfb').className='qfb';
+  document.getElementById('qnext').style.display='none';
+  QST.done=false;
+  // Render pilihan sesuai urutan acak
+  document.getElementById('qopts').innerHTML=opt.shuffledIdx.map((origIdx,i)=>
+    `<button class="qopt" onclick="ansQ(${i})">${String.fromCharCode(65+i)}. ${q.opts[origIdx]}</button>`
+  ).join('');
+  const pct=(QST.cur/10)*100;
+  document.getElementById('qpf').style.width=pct+'%';
+  document.getElementById('qsc').textContent=`Skor: ${QST.score}/${QST.cur}`;
+  document.getElementById('qnum').textContent=`Soal ${QST.cur+1}/10`;
+}
+
+function ansQ(idx){
+  if(QST.done)return;QST.done=true;
+  const q=activeQS[QST.cur];
+  const opt=activeOpts[QST.cur];
+  const correctShuffled=opt.newCorrect;
+  document.querySelectorAll('.qopt').forEach((b,i)=>{
+    b.style.pointerEvents='none';
+    if(i===correctShuffled)b.classList.add('correct');
+    else if(i===idx&&idx!==correctShuffled)b.classList.add('wrong');
+  });
+  const fb=document.getElementById('qfb');
+  if(idx===correctShuffled){QST.score++;fb.textContent='✓ Benar! '+q.exp;fb.className='qfb correct show';}
+  else{fb.textContent='✗ Salah. '+q.exp;fb.className='qfb wrong show';}
+  document.getElementById('qsc').textContent=`Skor: ${QST.score}/${QST.cur+1}`;
+  const nxt=document.getElementById('qnext');
+  nxt.style.display='block';
+  nxt.textContent=QST.cur<9?'Soal Berikutnya →':'Lihat Hasil';
+}
+
+function nextQ(){
+  QST.cur++;
+  if(QST.cur>=10){showRes();}
+  else renderQ();
+}
+
+function showRes(){
+  document.getElementById('qbody').style.display='none';
+  document.getElementById('qresult').style.display='block';
+  document.getElementById('qpf').style.width='100%';
+  const pct=Math.round(QST.score/10*100);
+  document.getElementById('qsbig').textContent=`${QST.score}/10`;
+  let msg,col;
+  if(pct>=90){msg='🎉 Luar biasa! Penguasaan materi Line Coding sangat baik!';col='var(--c2)';}
+  else if(pct>=70){msg='👍 Bagus! Pelajari kembali materi yang masih kurang.';col='var(--c4)';}
+  else if(pct>=50){msg='📖 Cukup. Disarankan membaca ulang semua materi teori.';col='var(--c6)';}
+  else{msg='📚 Perlu belajar lebih lagi. Mulai dari tab Teori & Video ya!';col='var(--c3)';}
+  const m=document.getElementById('qmsg');m.textContent=msg;m.style.color=col;
+}
+
+initQ();
+</script>
+</body>
+</html>
